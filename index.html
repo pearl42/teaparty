@@ -1,0 +1,468 @@
+<!--
+Cafe-Themed Party Ordering Prototype
+Single-file HTML/CSS/JS demo.
+
+Instructions:
+1. Save this file as `index.html` and open it in a browser to run the local demo.
+2. By default this demo saves orders to localStorage so you can try it without any backend.
+3. To enable Firebase (Realtime Database) so orders sync across devices:
+   - Create a Firebase project and Realtime Database (or Firestore) in your Firebase console.
+   - Add a Web App in Firebase and copy the config object.
+   - Paste the config object into the `FIREBASE_CONFIG` variable below and set `USE_FIREBASE = true`.
+   - This file refers to the Firebase JS SDK via CDN; you'll need internet for Firebase connectivity.
+
+Features implemented:
+- Start splash with Start button
+- Tabbed menu: Black Teas, Green Teas, Herbals, Odd Teas
+- Each tab: scrollable list of 8 teas (name + short description + Add button)
+- Add opens full-screen customization page with choices for strength, milk, sweetener, sweetness
+- Order button enabled only after selections; generates order number and shows thank you
+- After 5 seconds returns to Start splash
+- Orders stored (localStorage or Firebase) and visible on Admin screen (#admin)
+- Admin screen: lists active orders, mark as Preparing/Done; shows what is being prepared
+
+Limitations of demo:
+- No authentication for admin view (you can lock it via a simple password if you want)
+- Firebase usage requires your project config
+
+Have fun — you can edit the tea list or styles below!
+-->
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Cafe Party Ordering — Demo</title>
+  <style>
+    :root{
+      --bg:#f5efe6; --accent:#6b4f4f; --muted:#8b7d78; --card:#fff; --glass: rgba(255,255,255,0.6);
+      --max-width:1000px;
+      font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#f7f3ee 0%, #f2ebe3 100%);color:#2b1f1f}
+    .app{max-width:var(--max-width);margin:20px auto;padding:16px}
+    /* Start splash */
+    .splash{display:flex;align-items:center;justify-content:center;height:75vh;border-radius:12px;background-image:linear-gradient(135deg, rgba(107,79,79,0.06), rgba(107,79,79,0.02));box-shadow:0 6px 18px rgba(0,0,0,0.06);}
+    .start-card{background:var(--card);padding:40px;border-radius:12px;text-align:center;width:min(720px,96%)}
+    .start-btn{background:var(--accent);color:white;border:none;padding:18px 36px;font-size:20px;border-radius:10px;cursor:pointer}
+    .start-btn:active{transform:translateY(1px)}
+
+    /* Menu */
+    .menu{display:flex;flex-direction:column;gap:12px}
+    .tabs{display:flex;gap:8px}
+    .tab{padding:10px 14px;border-radius:10px;background:var(--glass);cursor:pointer}
+    .tab.active{background:var(--accent);color:#fff}
+    .tea-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;max-height:64vh;overflow:auto;padding:6px}
+    .tea{background:var(--card);padding:12px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.04);display:flex;flex-direction:column}
+    .tea h4{margin:0 0 6px 0}
+    .tea p{margin:0 0 10px 0;color:var(--muted);font-size:14px}
+    .add-btn{margin-top:auto;padding:8px 10px;border-radius:8px;border:none;background:#e9dcdc;color:#2b1f1f;cursor:pointer}
+
+    /* Customize page */
+    .customize{padding:18px;background:var(--card);border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,0.06)}
+    .option-group{margin-bottom:12px}
+    .option-group label{display:block;margin-bottom:6px;font-weight:600}
+    .options{display:flex;gap:8px;flex-wrap:wrap}
+    .option{padding:8px 12px;border-radius:999px;border:1px solid rgba(43,31,31,0.06);cursor:pointer}
+    .option.selected{background:var(--accent);color:fff;color:#fff;border-color:var(--accent)}
+    .order-btn{display:inline-block;padding:12px 18px;border-radius:10px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-size:16px}
+    .order-btn[disabled]{opacity:0.45;cursor:not-allowed}
+
+    /* Admin */
+    .admin-grid{display:grid;grid-template-columns:1fr 320px;gap:12px}
+    .order-card{background:var(--card);padding:12px;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
+    .small{font-size:13px;color:var(--muted)}
+    .badge{display:inline-block;padding:4px 8px;border-radius:8px;background:#f0efe9;font-weight:700}
+
+    footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}
+
+    @media (max-width:880px){.admin-grid{grid-template-columns:1fr} .splash{height:65vh}}
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <!-- Start Splash -->
+    <div id="splash" class="splash">
+      <div class="start-card">
+        <h1 style="margin:0 0 8px 0">Welcome to the Tea Bar 🎉</h1>
+        <p style="margin:0 0 18px 0; color:var(--muted)">Tap Start to place an order. We'll show your order number when it's placed.</p>
+        <button id="startBtn" class="start-btn">Start Order</button>
+      </div>
+    </div>
+
+    <!-- Menu Screen -->
+    <div id="menuScreen" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <h2 style="margin:0">Menu</h2>
+        <div style="display:flex;gap:8px;align-items:center">
+          <a href="#admin">Admin Screen</a>
+          <button id="backToSplash" style="padding:8px 10px;border-radius:8px">Back</button>
+        </div>
+      </div>
+      <div class="menu">
+        <div class="tabs" id="tabs"></div>
+        <div class="tea-list" id="teaList"></div>
+      </div>
+    </div>
+
+    <!-- Customize Screen -->
+    <div id="customizeScreen" style="display:none">
+      <button id="customBack" style="margin-bottom:12px">← Back to Menu</button>
+      <div class="customize" id="customizeCard">
+        <h3 id="customTeaName">Tea Name</h3>
+        <p id="customTeaDesc" class="small">Tea description</p>
+
+        <div class="option-group">
+          <label>Strength</label>
+          <div class="options" id="strengthOptions"></div>
+        </div>
+        <div class="option-group">
+          <label>Milk</label>
+          <div class="options" id="milkOptions"></div>
+        </div>
+        <div class="option-group">
+          <label>Sweetener</label>
+          <div class="options" id="sweetenerOptions"></div>
+        </div>
+        <div class="option-group">
+          <label>Sweetness Level</label>
+          <div class="options" id="sweetnessOptions"></div>
+        </div>
+
+        <div style="margin-top:12px">
+          <button id="orderBtn" class="order-btn" disabled>Order</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Confirmation overlay -->
+    <div id="confirmation" style="display:none;padding:18px;text-align:center">
+      <div style="background:var(--card);display:inline-block;padding:18px;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,0.08)">
+        <h2 id="orderNumber">#123</h2>
+        <p id="orderThanks">Thank you for your order!</p>
+      </div>
+    </div>
+
+    <!-- Admin Screen -->
+    <div id="adminScreen" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <h2 style="margin:0">Admin — Orders</h2>
+        <div style="display:flex;gap:8px;align-items:center">
+          <a href="#" id="adminBackLink">Guest Menu</a>
+        </div>
+      </div>
+      <div class="admin-grid">
+        <div>
+          <h3>Active Orders</h3>
+          <div id="ordersList"></div>
+        </div>
+        <div>
+          <h3>Now Preparing</h3>
+          <div id="preparingList"></div>
+          <h4 style="margin-top:12px">Order Log</h4>
+          <div id="orderLog" style="max-height:40vh;overflow:auto;padding:6px"></div>
+        </div>
+      </div>
+    </div>
+
+    <footer>Prototype — edit tea list, styles, or hook up Firebase for multi-device syncing.</footer>
+  </div>
+
+  <script>
+    /***** CONFIG: choose whether to use Firebase (multi-device) or localStorage (demo) *****/
+    const USE_FIREBASE = false; // set to true to enable firebase (you must paste FIREBASE_CONFIG)
+    const FIREBASE_CONFIG = {
+      // paste your firebase config here if USE_FIREBASE = true
+      // apiKey: "...",
+    };
+
+    // If using Firebase, we'll include the SDK scripts dynamically when enabled.
+
+    // Sample teas (8 per category). Edit as desired.
+    const TEAS = {
+      'Black Teas': [
+        {id:'b1',name:'English Breakfast',desc:'Full-bodied, malty and robust.'},
+        {id:'b2',name:'Earl Grey',desc:'Bergamot-scented classic.'},
+        {id:'b3',name:'Assam',desc:'Strong & malty from India.'},
+        {id:'b4',name:'Darjeeling',desc:'Delicate muscatel notes.'},
+        {id:'b5',name:'Ceylon',desc:'Bright and citrusy.'},
+        {id:'b6',name:'Irish Breakfast',desc:'Bold blend, great with milk.'},
+        {id:'b7',name:'Lapsang Souchong',desc:'Smoky and unique.'},
+        {id:'b8',name:'Orange Pekoe',desc:'A balanced everyday tea.'}
+      ],
+      'Green Teas': [
+        {id:'g1',name:'Sencha',desc:'Refreshing grassy notes.'},
+        {id:'g2',name:'Matcha',desc:'Ceremonial powdered green tea.'},
+        {id:'g3',name:'Gyokuro',desc:'Umami-rich shaded green.'},
+        {id:'g4',name:'Dragon Well',desc:'Toasty chestnut aroma.'},
+        {id:'g5',name:'Gunpowder',desc:'Bold rolled leaves.'},
+        {id:'g6',name:'Hojicha',desc:'Roasted, comforting flavor.'},
+        {id:'g7',name:'Jasmine Green',desc:'Scented with jasmine blossoms.'},
+        {id:'g8',name:'Genmaicha',desc:'With toasted rice notes.'}
+      ],
+      'Herbals': [
+        {id:'h1',name:'Chamomile',desc:'Calming apple-like notes.'},
+        {id:'h2',name:'Peppermint',desc:'Cool and refreshing.'},
+        {id:'h3',name:'Lemongrass',desc:'Citrus and bright.'},
+        {id:'h4',name:'Rooibos',desc:'Naturally sweet and nutty.'},
+        {id:'h5',name:'Hibiscus',desc:'Tart and berry-like.'},
+        {id:'h6',name:'Ginger',desc:'Spicy and warming.'},
+        {id:'h7',name:'Lavender Calm',desc:'Floral and soothing.'},
+        {id:'h8',name:'Turmeric Glow',desc:'Earthy and warming.'}
+      ],
+      'Odd Teas': [
+        {id:'o1',name:'Butterfly Pea',desc:'Blue floral, color-changing.'},
+        {id:'o2',name:'Kombucha (Mock)',desc:'Fizzy tea-style mock.'},
+        {id:'o3',name:'Smoked Plum',desc:'Sweet and smoky.'},
+        {id:'o4',name:'Chai Fusion',desc:'Spiced sweet chai.'},
+        {id:'o5',name:'Seaweed Tea',desc:'Umami-forward experiment.'},
+        {id:'o6',name:'Cocoa Tea',desc:'Chocolatey and cozy.'},
+        {id:'o7',name:'Sakura Brew',desc:'Cherry blossom scented.'},
+        {id:'o8',name:'Maple Oolong',desc:'Caramel and maple notes.'}
+      ]
+    };
+
+    // Options
+    const STRENGTHS = ['Light','Normal','Bold'];
+    const MILKS = ['None','Splash','Glug'];
+    const SWEETENERS = ['Honey','Black Sugar Syrup','Lavender Syrup','Sugar'];
+    const SWEETNESS = ['None','Lightly Sweet','Very Sweet'];
+
+    // Simple storage wrapper (localStorage or Firebase placeholder)
+    const STORAGE_KEY = 'cafe_party_orders_v1';
+
+    // Orders structure: {orders: {orderId: {...}}, log: [order objects], nextOrderNumber: N}
+    let STORE = {orders:{}, log:[], nextOrderNumber: 100};
+
+    function loadStore(){
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        try{STORE = JSON.parse(raw);}catch(e){console.warn('parse failed',e)}
+      }
+    }
+    function saveStore(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(STORE));
+    }
+
+    // UI references
+    const splash = document.getElementById('splash');
+    const startBtn = document.getElementById('startBtn');
+    const menuScreen = document.getElementById('menuScreen');
+    const teaList = document.getElementById('teaList');
+    const tabsEl = document.getElementById('tabs');
+    const backToSplash = document.getElementById('backToSplash');
+    const customizeScreen = document.getElementById('customizeScreen');
+    const customTeaName = document.getElementById('customTeaName');
+    const customTeaDesc = document.getElementById('customTeaDesc');
+    const strengthOptions = document.getElementById('strengthOptions');
+    const milkOptions = document.getElementById('milkOptions');
+    const sweetenerOptions = document.getElementById('sweetenerOptions');
+    const sweetnessOptions = document.getElementById('sweetnessOptions');
+    const orderBtn = document.getElementById('orderBtn');
+    const confirmation = document.getElementById('confirmation');
+    const orderNumberEl = document.getElementById('orderNumber');
+    const orderThanks = document.getElementById('orderThanks');
+    const customBack = document.getElementById('customBack');
+    const adminScreen = document.getElementById('adminScreen');
+    const ordersList = document.getElementById('ordersList');
+    const preparingList = document.getElementById('preparingList');
+    const orderLog = document.getElementById('orderLog');
+    const adminBackLink = document.getElementById('adminBackLink');
+
+    // Current selection
+    let currentCategory = Object.keys(TEAS)[0];
+    let currentTea = null;
+    let selections = {strength:null,milk:null,sweetener:null,sweetness:null};
+
+    // Routing: simple hash-based
+    function router(){
+      const hash = location.hash.replace('#','');
+      if(hash === 'admin'){
+        showAdmin();
+      }else if(hash === 'menu'){
+        showMenu();
+      }else{
+        showSplash();
+      }
+    }
+
+    // UI show/hide helpers
+    function showSplash(){splash.style.display='flex'; menuScreen.style.display='none'; customizeScreen.style.display='none'; confirmation.style.display='none'; adminScreen.style.display='none';}
+    function showMenu(){splash.style.display='none'; menuScreen.style.display='block'; customizeScreen.style.display='none'; confirmation.style.display='none'; adminScreen.style.display='none';}
+    function showCustomize(){splash.style.display='none'; menuScreen.style.display='none'; customizeScreen.style.display='block'; confirmation.style.display='none'; adminScreen.style.display='none';}
+    function showConfirmation(){splash.style.display='none'; menuScreen.style.display='none'; customizeScreen.style.display='none'; confirmation.style.display='block'; adminScreen.style.display='none';}
+    function showAdmin(){splash.style.display='none'; menuScreen.style.display='none'; customizeScreen.style.display='none'; confirmation.style.display='none'; adminScreen.style.display='block'; renderAdmin();}
+
+    // Build tabs and tea list
+    function buildTabs(){
+      tabsEl.innerHTML='';
+      Object.keys(TEAS).forEach(cat=>{
+        const btn = document.createElement('div');
+        btn.className = 'tab' + (cat===currentCategory? ' active':'');
+        btn.textContent = cat;
+        btn.onclick = ()=>{ currentCategory = cat; buildTabs(); renderTeaList(); }
+        tabsEl.appendChild(btn);
+      });
+    }
+    function renderTeaList(){
+      teaList.innerHTML = '';
+      TEAS[currentCategory].forEach(t=>{
+        const el = document.createElement('div'); el.className='tea';
+        const h = document.createElement('h4'); h.textContent = t.name; el.appendChild(h);
+        const p = document.createElement('p'); p.textContent = t.desc; el.appendChild(p);
+        const btn = document.createElement('button'); btn.className='add-btn'; btn.textContent='Add to Order';
+        btn.onclick = ()=>openCustomize(t);
+        el.appendChild(btn);
+        teaList.appendChild(el);
+      });
+    }
+
+    function openCustomize(tea){
+      currentTea = tea; selections = {strength:null,milk:null,sweetener:null,sweetness:null};
+      customTeaName.textContent = tea.name; customTeaDesc.textContent = tea.desc;
+      populateOptions(strengthOptions, STRENGTHS, 'strength');
+      populateOptions(milkOptions, MILKS, 'milk');
+      populateOptions(sweetenerOptions, SWEETENERS, 'sweetener');
+      populateOptions(sweetnessOptions, SWEETNESS, 'sweetness');
+      orderBtn.disabled = true; showCustomize();
+    }
+
+    function populateOptions(container, arr, key){
+      container.innerHTML='';
+      arr.forEach(v=>{
+        const pill = document.createElement('div'); pill.className='option'; pill.textContent=v;
+        pill.onclick = ()=>{
+          // toggle selection
+          selections[key] = v;
+          // update UI
+          Array.from(container.children).forEach(c=>c.classList.remove('selected'));
+          pill.classList.add('selected');
+          checkReady();
+        }
+        container.appendChild(pill);
+      });
+    }
+
+    function checkReady(){
+      const ready = selections.strength && selections.milk && selections.sweetener && selections.sweetness;
+      orderBtn.disabled = !ready;
+    }
+
+    function placeOrder(){
+      // create order object
+      const num = STORE.nextOrderNumber || 100;
+      const orderId = 'order_'+Date.now();
+      const orderObj = {
+        id: orderId,
+        number: num,
+        createdAt: (new Date()).toISOString(),
+        tea: currentTea,
+        selections: {...selections},
+        status: 'queued' // queued -> preparing -> done
+      };
+      STORE.orders[orderId] = orderObj;
+      STORE.log.unshift(orderObj);
+      STORE.nextOrderNumber = num + 1;
+      saveStore();
+	
+	// Send to Google Sheet
+      fetch('https://script.google.com/macros/s/AKfycbyggBsmFoKVcnjgiZtvLJ35oO9uFEECa6Drjc6j-vtkqrnX0Vr5iqrapt3I9EVMOh0F/exec', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          number: num,
+          tea: currentTea.name,
+          strength: selections.strength,
+          milk: selections.milk,
+          sweetener: selections.sweetener,
+          sweetness: selections.sweetness,
+          status: 'queued'
+        })
+      }).catch(console.error);
+
+      // show confirmation
+      orderNumberEl.textContent = '#' + orderObj.number;
+      orderThanks.textContent = 'Thank you for your order!';
+      showConfirmation();
+
+      // after 5 seconds go back to splash
+      setTimeout(()=>{ location.hash=''; router(); },5000);
+    }
+
+    // Admin rendering
+    function renderAdmin(){
+      // active orders: queued or preparing
+      ordersList.innerHTML=''; preparingList.innerHTML=''; orderLog.innerHTML='';
+      const ordersArr = Object.values(STORE.orders).sort((a,b)=> a.number - b.number);
+      ordersArr.forEach(o=>{
+        const card = document.createElement('div'); card.className='order-card';
+        const h = document.createElement('div'); h.innerHTML = `<div style=\"display:flex;justify-content:space-between;align-items:center\"><strong>#${o.number}</strong><span class=\"small\">${new Date(o.createdAt).toLocaleTimeString()}</span></div>`;
+        card.appendChild(h);
+        const details = document.createElement('div'); details.className='small'; details.style.marginTop='8px';
+        details.innerHTML = `<div><strong>${o.tea.name}</strong></div>
+          <div>Strength: ${o.selections.strength} • Milk: ${o.selections.milk}</div>
+          <div>Sweetener: ${o.selections.sweetener} • Sweetness: ${o.selections.sweetness}</div>
+          <div style=\"margin-top:8px\">Status: <span class=\"badge\">${o.status}</span></div>`;
+        card.appendChild(details);
+
+        const actions = document.createElement('div'); actions.style.marginTop='8px';
+        const prepBtn = document.createElement('button'); prepBtn.textContent = (o.status==='preparing'?'Mark Done':'Mark Preparing');
+        prepBtn.style.marginRight='8px';
+        prepBtn.onclick = ()=>{
+          if(o.status === 'queued') o.status='preparing';
+          else if(o.status === 'preparing') o.status='done';
+          else o.status='queued';
+          STORE.orders[o.id] = o; saveStore(); renderAdmin();
+        }
+        const delBtn = document.createElement('button'); delBtn.textContent='Remove'; delBtn.onclick = ()=>{ delete STORE.orders[o.id]; saveStore(); renderAdmin(); }
+        actions.appendChild(prepBtn); actions.appendChild(delBtn);
+        card.appendChild(actions);
+
+        if(o.status === 'queued' || o.status==='preparing') ordersList.appendChild(card);
+        if(o.status === 'preparing') preparingList.appendChild(card.cloneNode(true));
+      });
+
+      // order log (most recent first)
+      STORE.log.slice(0,50).forEach(o=>{
+        const li = document.createElement('div'); li.className='small'; li.style.borderBottom='1px solid rgba(0,0,0,0.03)'; li.style.padding='8px 2px';
+        li.innerHTML = `#${o.number} • ${o.tea.name} • ${o.selections.strength} • ${o.status}`;
+        orderLog.appendChild(li);
+      });
+    }
+
+    // Event bindings
+    startBtn.onclick = ()=>{ location.hash='menu'; router(); }
+    backToSplash.onclick = ()=>{ location.hash=''; router(); }
+    customBack.onclick = ()=>{ location.hash='menu'; router(); }
+    orderBtn.onclick = ()=>{ placeOrder(); }
+    adminBackLink.onclick = (e)=>{ e.preventDefault(); location.hash='menu'; router(); }
+
+    // initialize
+    function init(){
+      loadStore();
+      buildTabs(); renderTeaList();
+      // show correct route
+      window.addEventListener('hashchange', router);
+      router();
+
+      // For demo: keyboard shortcut 'a' goes to admin
+      window.addEventListener('keydown', e=>{ if(e.key==='a'){ location.hash='admin'; router(); } });
+
+      // If firebase enabled, dynamic load (not implemented in this demo code path but scaffolded)
+      if(USE_FIREBASE){
+        const s1 = document.createElement('script'); s1.src='https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js'; document.head.appendChild(s1);
+        const s2 = document.createElement('script'); s2.src='https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js'; document.head.appendChild(s2);
+        s2.onload = ()=>{
+          const app = firebase.initializeApp(FIREBASE_CONFIG);
+          const db = firebase.database();
+          // TODO: implement read/write to firebase
+          console.log('Firebase loaded (not fully wired in demo).');
+        }
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
