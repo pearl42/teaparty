@@ -11,17 +11,17 @@
       --max-width:1000px;
       font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
     }
-    html,body{background-image: url('dragon.png');background-size:cover;background-repeat:no-repeat;background-position:center;background-attachment:fixed;height:100%;background:linear-gradient(180deg,#f7f3ee 0%, #f2ebe3 100%);color:#2b1f1f}
-    .app{max-width:var(--max-width);margin:20px auto;padding:16px}
+    html,body{background-image: url('dragon.png');background-size:cover;background-repeat:no-repeat;background-position:center;background-attachment:fixed;min-height:100vh;color:#2b1f1f;margin:0px;}
+    .app{max-width:var(--max-width);margin:auto;}
     /* Start splash */
     .splash{display:flex;align-items:center;justify-content:center;height:100vh;border-radius:12px;background-image:linear-gradient(135deg, rgba(107,79,79,0.06), rgba(107,79,79,0.02));box-shadow:0 6px 18px rgba(0,0,0,0.06);}
-    .start-card{background:var(--read);padding:40px;border-radius:12px;text-align:center;width:min(720px,96%)}
+    .start-card{background:var(--read);padding:40px;border-radius:12px;text-align:center;width:min(720px,96%);margin:8px;}
     .start-btn{background:var(--accent);color:white;border:none;padding:18px 36px;font-size:20px;border-radius:10px;cursor:pointer}
     .start-btn:active{transform:translateY(1px)}
 
     /* Menu */
     .menu{display:flex;flex-direction:column;gap:12px}
-    .tabs{display:flex;gap:8px}
+    .tabs{display:flex;gap:8px;overflow:scroll;}
     .tab{padding:10px 14px;border-radius:10px;background:var(--glass);cursor:pointer}
     .tab.active{background:var(--accent);color:#fff}
     .tea-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;overflow:auto;padding:6px}
@@ -50,7 +50,13 @@
 
     footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}
 
-    @media (max-width:880px){.admin-grid{grid-template-columns:1fr} .splash{height:65vh}}
+    @media (max-width:880px){.admin-grid{grid-template-columns:1fr} }
+@media only screen and (max-width: 600px) {
+  .option {
+    font-size:80%;
+  }
+	.start-card{font-size:80%;margin:18px;padding:30px;}
+}
   </style>
 </head>
 <body>
@@ -65,11 +71,11 @@
     </div>
 
     <!-- Menu Screen -->
-    <div id="menuScreen" style="display:none">
+    <div id="menuScreen" style="display:none;padding:8px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <h2 style="margin:0">Menu</h2>
         <div style="display:flex;gap:8px;align-items:center">
-          <a href="#admin">Admin Screen</a>
+          <a href="#admin" style="display:none;">Admin Screen</a>
           <button id="backToSplash" style="padding:8px 10px;border-radius:8px">Back</button>
         </div>
       </div>
@@ -80,7 +86,7 @@
     </div>
 
     <!-- Customize Screen -->
-    <div id="customizeScreen" style="display:none">
+    <div id="customizeScreen" style="display:none;padding:8px;">
       <button id="customBack" style="margin-bottom:12px">← Back to Menu</button>
       <div class="customize" id="customizeCard">
         <h3 id="customTeaName">Tea Name</h3>
@@ -164,17 +170,18 @@
         {id:'p2',name:'Paris',desc:'Earl Grey with a touch of vanilla added',img:'paris2.webp'},
         {id:'p3',name:'Sticky Rice Puerh',desc:'Tastes like sticking your face in the steam from a zojirushi <3',img:'stickyrice2.png'},
         {id:'p4',name:'Banana Nut Honeybush',desc:'Sweet, cozy, banana-nutty, and caffeine-free',img:'banananut.webp'},
-	{id:'p5',name:'Matcha latte',desc:'Order this to give Evan carpal tunnel',img:'matcha.jpg'},
+	{id:'p5',name:'Matcha latte',desc:'Order lots of these to give Evan carpal tunnel',img:'matcha.jpg'},
         {id:'p6',name:'Hojicha latte',desc:'A roasty, nutty, less vegetal matcha alternative',img:'hojichalatte.jpg'},
         {id:'p7',name:'Green Thai iced tea',desc:'A green, jasmine-scented version of Thai iced tea',img:'greenthaitea.jpg'},
         {id:'c2',name:'Jasmine Dragon (21+)',desc:'A tart, lightly floral sparkling cocktail made with jasmine green tea-infused vodka',img:'jasminedragon.png'}
       ],
 	'Green Teas': [
-        {id:'g1',name:'Sencha',desc:'Refreshing grassy notes.',img:'sencha.jpg'},
+        {id:'g1',name:'Sencha',desc:'Crisp and grassy, classic green!',img:'sencha.jpg'},
         {id:'g5',name:'Kukicha',desc:'Made from tea leaf stems, this green option is lower in caffeine',img:'kukicha.jpg'},
-        {id:'g6',name:'Hojicha',desc:'Roasted kukicha; even lower in caffeine',img:'hojicha.jpg'},
-        {id:'g7',name:'Jasmine Green',desc:'Scented with jasmine blossoms.',img:'jasmine.jpg'},
-        {id:'g8',name:'Genmaicha',desc:'With toasted rice notes.',img:'genmaicha.jpg'}
+        {id:'g6',name:'Hojicha',desc:'Nutty, roasted kukicha; even lower in caffeine',img:'hojicha.jpg'},
+        {id:'g7',name:'Jasmine Green',desc:'Lightly floral',img:'jasmine.jpg'},
+        {id:'g8',name:'Genmaicha',desc:'Toasted rice brings out the umami, savory side of this sencha',img:'genmaicha.jpg'},
+        {id:'g9',name:'Walnut Green',desc:'A good friend of mine impersonated a tea wholesaler just to buy this in bulk',img:'walnutgreen.jpg'}
       ],
 	'Black Teas': [
         {id:'b1',name:'Paris',desc:'Earl Grey with a touch of vanilla',img:'paris2.webp'},
@@ -276,8 +283,8 @@
     }
 
     // UI show/hide helpers
-    function showSplash(){splash.style.display='flex'; menuScreen.style.display='none'; customizeScreen.style.display='none'; confirmation.style.display='none'; adminScreen.style.display='none';}
-    function showMenu(){splash.style.display='none'; menuScreen.style.display='block'; customizeScreen.style.display='none'; confirmation.style.display='none'; adminScreen.style.display='none';}
+    function showSplash(){splash.style.display='flex'; menuScreen.style.display='none'; customizeScreen.style.display='none'; confirmation.style.display='none'; adminScreen.style.display='none';document.body.style.background='';}
+    function showMenu(){splash.style.display='none'; menuScreen.style.display='block'; customizeScreen.style.display='none'; confirmation.style.display='none'; adminScreen.style.display='none';document.body.style.background='#f7f3ee';}
     function showCustomize(){splash.style.display='none'; menuScreen.style.display='none'; customizeScreen.style.display='block'; confirmation.style.display='none'; adminScreen.style.display='none';}
     function showConfirmation(){splash.style.display='none'; menuScreen.style.display='none'; customizeScreen.style.display='none'; confirmation.style.display='block'; adminScreen.style.display='none';}
     function showAdmin(){splash.style.display='none'; menuScreen.style.display='none'; customizeScreen.style.display='none'; confirmation.style.display='none'; adminScreen.style.display='block'; renderAdmin();}
