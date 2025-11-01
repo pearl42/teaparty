@@ -21,7 +21,7 @@
 
     /* Menu */
     .menu{display:flex;flex-direction:column;gap:12px}
-    .tabs{display:flex;gap:8px;overflow:scroll;}
+    .tabs{display:flex;gap:8px;overflow-x:auto;}
     .tab{padding:10px 14px;border-radius:10px;background:var(--glass);cursor:pointer}
     .tab.active{background:var(--accent);color:#fff}
     .tea-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;overflow:auto;padding:6px}
@@ -30,6 +30,7 @@
     .tea p{margin:0 0 10px 0;color:var(--muted);font-size:14px}
     .add-btn{margin-top:auto;padding:8px 10px;border-radius:8px;border:none;background:#e9dcdc;color:#2b1f1f;cursor:pointer}
 	.teaimage{height:200px;width:200px;margin:auto;}
+.logo{height:300px;width:auto;margin:auto;}
 
     /* Customize page */
     .customize{padding:18px;background:var(--card);border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,0.06)}
@@ -49,7 +50,7 @@
     .badge{display:inline-block;padding:4px 8px;border-radius:8px;background:#f0efe9;font-weight:700}
 
     footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}
-
+	#customback{font-size:1.5em;}
     @media (max-width:880px){.admin-grid{grid-template-columns:1fr} }
 @media only screen and (max-width: 600px) {
   .option {
@@ -64,7 +65,7 @@
     <!-- Start Splash -->
     <div id="splash" class="splash">
       <div class="start-card">
-        <h1 style="margin:0 0 8px 0">Welcome to the Jasmine Dragon 🐉</h1>
+        <h1 style="margin:0 0 8px 0">Welcome to the Jasmine Dragon</h1>
         <p style="margin:0 0 18px 0; color:darkgreen;">Tap Start to place an order. We'll show your order number when it's placed.</p>
         <button id="startBtn" class="start-btn">Start Order</button>
       </div>
@@ -81,8 +82,8 @@
       </div>
       <div class="menu">
         <div class="tabs" id="tabs"></div>
-        <div class="tea-list" id="teaList"></div>
-      </div>
+        <div class="tea-list" id="teaList"><img class="logo" src="whitelotusraster.png" style="height:200px;width:auto;margin:auto;"></div>
+      <img class="logo" src="whitelotusraster.png"></div>
     </div>
 
     <!-- Customize Screen -->
@@ -173,7 +174,7 @@
 	{id:'p5',name:'Matcha latte',desc:'Order lots of these to give Evan carpal tunnel',img:'matcha.jpg'},
         {id:'p6',name:'Hojicha latte',desc:'A roasty, nutty, less vegetal matcha alternative',img:'hojichalatte.jpg'},
         {id:'p7',name:'Green Thai iced tea',desc:'A green, jasmine-scented version of Thai iced tea',img:'greenthaitea.jpg'},
-        {id:'c2',name:'Jasmine Dragon (21+)',desc:'A tart, lightly floral sparkling cocktail made with jasmine green tea-infused vodka',img:'jasminedragon.png'}
+        {id:'p2',name:'Jasmine Dragon (21+)',desc:'A tart, lightly floral sparkling cocktail made with jasmine green tea-infused vodka',img:'jasminedragon.png'}
       ],
 	'Green Teas': [
         {id:'g1',name:'Sencha',desc:'Crisp and grassy, classic green!',img:'sencha.jpg'},
@@ -185,41 +186,40 @@
       ],
 	'Black Teas': [
         {id:'b1',name:'Paris',desc:'Earl Grey with a touch of vanilla',img:'paris2.webp'},
-        {id:'b2',name:'Rose Petal Black',desc:'Black tea with a floral, sweet twist',img:'roseblack.png'},
+        {id:'b2',name:'Malty Biscuit Tea',desc:'Condense afternoon tea into a single sip with this biscuit-flavored tea',img:'roseblack.png'},
 	{id:'b2',name:'Royal Blend',desc:'A Fortnum and Mason classic',img:'royalblendtea.jpg'},
         {id:'b3',name:'Smoked Assam',desc:'Smoky and... unique',img:'assam.webp'},
-        {id:'b4',name:'Chai',desc:'Very spice-forward, warming, and malty',img:'chai.webp'},
+        {id:'b4',name:'Masala Chai',desc:'Very spice-forward, warming, and toasty',img:'chai.webp'},
       ],
       'Oolongs+Puerhs': [
         {id:'g1',name:'Osmanthus Oolong',desc:'Floral! Crisp! Pearls favorite tea',img:'osmanthus.png'},
-	{id:'g1',name:'Coconut Oolong',desc:'Delicate coconut flavor--Pearls #2 :)',img:'coconut.png'},
+	{id:'g2',name:'Coconut Oolong',desc:'Delicate coconut flavor--Pearls #2 :)',img:'coconut.png'},
         {id:'g5',name:'Milk Oolong',desc:'Delicate, creamy, barely-there pineapple notes',img:'milk.png'},
-        {id:'g6',name:'Roasted Oolong',desc:'Nuttier, more oxidized, red oolong',img:'roastedoolong.png'},
         {id:'g7',name:'Tangerine Puerh',desc:'This puerh takes on some of the flavor of the mandarin its aged inside of',img:'tangerine.png'},
         {id:'g8',name:'Sticky Rice Puerh',desc:'Tastes like sticking your face in the steam from a zojirushi <3',img:'stickyrice2.png'}
       ],
       'Herbals': [
         {id:'h1',name:'Banana Nut Honeybush',desc:'Sweet, cozy, banana-nutty, and caffeine-free',img:'banananut.webp'},
-        {id:'h2',name:'Spearmint',desc:'tbh this has sweaty sock vibes to me idk why you mint tea people like this',img:'mint.webp'},
-        {id:'h3',name:'Yujacha',desc:'While the "cha" in yujacha means tea, this is really just yuzu-honey jam dissolved in water',img:'yujacha.webp'}
+        {id:'h2',name:'Spearmint',desc:'Try not to confuse this tea for mouthwash, you can swallow :)',img:'mint.webp'},
+        {id:'h3',name:'Yujacha',desc:'While the "cha" in yujacha means tea, this is really just yuzu-honey jam dissolved in warm water',img:'yujacha.webp'},
+        {id:'h4',name:'Divine Hawaiian',desc:'This fruit tea has all your tropical favorites like pineapple and papaya, with none of the caffeine',img:'divinehawaiian.webp'}
       ],
       'Tea Lattes': [
-        {id:'o1',name:'Matcha latte',desc:'Order this to give Evan carpal tunnel',img:'matcha.jpg'},
+        {id:'o1',name:'Matcha latte',desc:'Order lots of these to give Evan carpal tunnel <3',img:'matcha.jpg'},
         {id:'o2',name:'Hojicha latte',desc:'A roasty, nutty, less vegetal matcha alternative',img:'hojichalatte.jpg'},
         {id:'o3',name:'Thai iced tea',desc:'A spiced black tea classic (pre-sweetened)',img:'thaitea.jpg'},
-        {id:'o4',name:'Green Thai iced tea',desc:'A green, jasmine-scented version of Thai iced tea',img:'greenthaitea.jpg'}
+        {id:'o4',name:'Green Thai iced tea',desc:'A green, jasmine-scented version of Thai iced tea (pre-sweetened)',img:'greenthaitea.jpg'}
       ],
       'Tea Cocktails': [
-        {id:'c1',name:'Yujacha Lemon Sour',desc:'A Japanese-style sour with Korean yujacha (a caffeine-free yuzu jam)',img:'sour.jpg'},
-        {id:'c2',name:'Jasmine Dragon',desc:'A tart, lightly floral sparkling cocktail made with jasmine green tea-infused vodka',img:'jasminedragon.png'},
-        {id:'c3',name:'London Fog Milk Punch',desc:'A milk-clarified, high ABV drink made with earl grey tea and vanilla simple',img:'londonfog.png'},
-        {id:'c4',name:'Hojicha Latte (21+)',desc:'Hojicha latte with Coconut Rumchata',img:'21hojicha.webp'}
+        {id:'c1',name:'Yujacha Chu-Hi',desc:'A Japanese-style sour with yujacha (a caffeine-free yuzu jam "tea")',img:'sour.jpg'},
+        {id:'c2',name:'Jasmine Dragon',desc:'Milk-clarified jasmine tea-infused vodka, lemon, jasmine honey simple, and soda water',img:'jasminedragon.png'},
+        {id:'c4',name:'Hojicha Latte (21+)',desc:'Hand-whisked hojicha shaken with coconut cream liqueur',img:'21hojicha.webp'}
       ]
     };
 
     // Options
     const STRENGTHS = ['Light','Normal','Bold'];
-    const MILKS = ['None','Splash','Glug'];
+    const MILKS = ['None','Oat','Lactose Free'];
     const SWEETENERS = ['None','Honey','Black Sugar Syrup','Lavender Syrup','Sugar'];
     const SWEETNESS = ['None','Lightly Sweet','Very Sweet'];
 
